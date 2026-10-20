@@ -108,7 +108,7 @@ async function generate(){
  c.width=900;c.height=1800;ctx.clearRect(0,0,900,1800);
  ctx.fillStyle=t.bg;ctx.fillRect(0,0,900,1800);
  ctx.fillStyle=t.paper;ctx.fillRect(42,42,816,1716);
- // Style-only decoration: all templates share the same photobooth strip proportions and page flow.
+ // Style-only decoration: the paper is filled by the photo frames; captions appear only in the bottom footer.
  if(style==='neon'){ctx.save();ctx.shadowColor=t.accent;ctx.shadowBlur=24;ctx.strokeStyle=t.accent;ctx.lineWidth=4;ctx.strokeRect(62,62,776,1676);ctx.restore()}
  if(style==='film'){ctx.fillStyle=t.bg;for(let y=58;y<1740;y+=36){for(let x=52;x<850;x+=28)ctx.fillRect(x,y,12,17)}ctx.fillStyle=t.paper;ctx.fillRect(105,70,690,1660)}
  if(style==='comic'){ctx.strokeStyle=t.ink;ctx.lineWidth=8;ctx.strokeRect(58,58,784,1684)}
@@ -116,9 +116,7 @@ async function generate(){
  if(style==='scrapbook'){ctx.save();ctx.translate(95,190);ctx.rotate(-.08);ctx.fillStyle='#d8b7a8';ctx.fillRect(-22,-20,150,40);ctx.restore();ctx.save();ctx.translate(725,190);ctx.rotate(.07);ctx.fillStyle='#d8b7a8';ctx.fillRect(-55,-20,125,40);ctx.restore()}
  const txt=(s,x,y,font,color=t.ink,align='center')=>{ctx.fillStyle=color;ctx.font=font;ctx.textAlign=align;ctx.fillText(s,x,y)};
  const name1=$('name1').value.trim()||(photoboothMode==='solo'?'AKU':'KAMU'),name2=photoboothMode==='solo'?'ME TIME':($('name2').value.trim()||'DIA');
- txt(t.label,450,104,'bold 21px Arial',t.accent);
- txt(photoboothMode==='solo'?(style==='korean'?'MY SOLO PHOTO STRIP':name1+' ✦ ME TIME'):name1+'  ♡  '+name2,450,151,'italic 30px Georgia',t.ink);
- txt(t.sub,450,184,'bold 13px Arial',t.muted);
+ // Full-paper photo strip: no title above the photos; wording is reserved for the bottom footer.
  const drawPhoto=(img,x,y,w,h)=>{
   ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
   if(img){
@@ -148,25 +146,20 @@ async function generate(){
  };
  const count=need, isGrid=layout==='grid', isSide=layout==='side';
  if(isGrid){
-  const w=320,h=430,gx=58,gy=225,gapX=44,gapY=70;
+  const w=320,h=430,gx=58,gy=82,gapX=44,gapY=28;
   for(let i=0;i<4;i++){const x=gx+(i%2)*(w+gapX),y=gy+Math.floor(i/2)*(h+gapY);frame(x,y,w,h,i)}
  }else if(isSide){
-  const w=300,h=520,y=380;frame(135,y,w,h,0);frame(465,y,w,h,1);
+  const w=300,h=680,y=82;frame(135,y,w,h,0);frame(465,y,w,h,1);
  }else{
-  const x=photoboothMode==='solo'?190:145,w=photoboothMode==='solo'?520:610;
-  const gap=count===4?18:24, h=count===4?300:count===3?390:520;
-  const total=count*h+(count-1)*gap;
-  const start=Math.max(215,Math.round((1490-total)/2)+205);
-  for(let i=0;i<count;i++)frame(x,start+i*(h+gap),w,h,i);
+  const x=photoboothMode==='solo'?95:78,w=photoboothMode==='solo'?710:744;
+  const gap=count===4?14:count===3?18:24;
+  const photoTop=68, footerTop=1580, available=footerTop-photoTop;
+  const h=Math.floor((available-(count-1)*gap)/count);
+  for(let i=0;i<count;i++)frame(x,photoTop+i*(h+gap),w,h,i);
  }
- if(style==='heart'){txt('♡  ✦  ♡',450,1600,'30px Georgia',t.accent)}
- else if(style==='ticket'){txt('ADMIT ONE · KEEP FOREVER',450,1600,'bold 16px monospace',t.accent)}
- else if(style==='comic'){txt('POW! ♥ WOW!',450,1600,'italic 900 28px Arial',t.accent)}
- else if(style==='film'){txt('FRAME BY FRAME · MEMORY FOREVER',450,1600,'bold 14px monospace',t.accent)}
- else if(style==='magazine'||style==='editorial'){txt('A LITTLE PIECE OF FOREVER',450,1600,'bold 17px Georgia',t.accent)}
- else{txt(photoboothMode==='solo'?'♡  JUST ME, MYSELF & I  ♡':'♡  TOGETHER IN EVERY FRAME  ♡',450,1600,'italic 18px Georgia',t.accent)}
- txt(cap,450,1642,'italic 20px Georgia',t.ink);
- txt(date.toUpperCase(),450,1680,'13px Arial',t.muted);
+ // Keep all wording at the bottom of the paper, like the Korean photo booth reference.
+ txt(cap,450,1640,'italic 23px Georgia',t.ink);
+ txt(date.toUpperCase(),450,1684,'13px Arial',t.muted);
  if(style==='neon'){ctx.save();ctx.shadowColor=t.accent;ctx.shadowBlur=10;txt('✦',450,1720,'22px Georgia',t.accent);ctx.restore()}
  $('emptyResult').classList.add('hidden');c.classList.remove('hidden');$('download').disabled=false;$('resultStatus').textContent='Strip foto siap diunduh ✦';
  if(sessionId&&configured())try{await api('photobooth_sessions?id=eq.'+encodeURIComponent(sessionId),'PATCH',{caption:cap,style:selectedStyle,layout:$('layout').value})}catch(e){}
