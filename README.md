@@ -1,41 +1,75 @@
-# Midnight Love — Couple Photobooth
+# Midnight Love Photobooth — versi publik
 
-Website photobooth romantis bertema Midnight Love, dibuat dalam satu file HTML agar mudah dipasang di GitHub Pages.
+Website photobooth berbahasa Indonesia, siap untuk GitHub Pages. Ada beberapa gaya strip, pilihan tata letak, filter, upload foto/kamera, hasil PNG, serta alur sesi foto LDR menggunakan tautan.
 
 ## Fitur
-- Upload foto untuk dua orang.
-- Ambil foto langsung melalui kamera HP/laptop (memerlukan izin kamera).
-- Hasil photostrip PNG yang bisa diunduh.
-- 3 tata letak, 4 gaya frame, caption, nama, dan sparkle.
-- Koneksi browser-to-browser (WebRTC) untuk mengirim foto antardua perangkat dengan menyalin kode offer/answer.
-- Responsif untuk HP, tablet, dan desktop.
+- Bahasa Indonesia dan desain responsif.
+- Template Midnight, Pink Love, Film Analog, Monokrom.
+- Layout strip 4/3/2 frame, foto berdampingan, kolase 2x2.
+- Upload foto dan kamera langsung.
+- Filter natural, hangat, dingin, hitam putih, dreamy.
+- Unduh hasil PNG.
+- Tautan sesi lintas perangkat memakai Supabase (perlu konfigurasi satu kali).
 
-## Cara pakai di GitHub Pages
-1. Ekstrak ZIP ini.
-2. Buat repository baru di GitHub, misalnya `midnight-love-photobooth`.
-3. Upload `index.html` ke root repository (jangan dimasukkan ke subfolder).
-4. Buka **Settings → Pages**.
-5. Pada **Build and deployment**, pilih **Deploy from a branch**.
-6. Pilih branch `main` dan folder `/(root)`, lalu tekan **Save**.
-7. Tunggu beberapa menit dan buka URL Pages yang diberikan GitHub.
+## A. Publikasikan di GitHub Pages
+1. Buat repository GitHub baru.
+2. Unggah `index.html` ke root repository.
+3. Masuk **Settings → Pages**.
+4. Pilih **Deploy from a branch**, branch `main`, folder `/(root)`, lalu Save.
 
-## Cara membuat photostrip
-1. Isi foto untuk Person One dan Person Two melalui Upload photo atau Use camera.
-2. Sesuaikan nama, caption, gaya frame, dan layout.
-3. Tekan **Generate photostrip**.
-4. Tekan **Download photostrip** untuk menyimpan PNG.
+## B. Aktifkan tautan sesi lintas perangkat (Supabase gratis)
+GitHub Pages hanya menyajikan file statis. Agar foto yang kamu ambil bisa dilihat pacar melalui link, perlu database online. Website ini sudah disiapkan untuk Supabase.
 
-## Mengirim foto antarperangkat (LDR)
-1. Kedua orang membuka website yang sudah terpasang di GitHub Pages.
-2. Perangkat pertama tekan **Create connection code**, lalu kirim isi Offer Code lewat chat.
-3. Perangkat kedua pilih **I have a session code**, tempel offer, lalu tekan **Create answer code**.
-4. Perangkat kedua kirim Answer Code kembali.
-5. Perangkat pertama tempel Answer Code lalu tekan **Connect**.
-6. Setelah status Connected, tombol **Send my photo** mengirim foto Person One dari perangkat tersebut. Tombol **Send partner photo to my device** mengirim foto Person Two dari perangkat tersebut; nama tombol membantu memilih foto yang akan dikirim, tetapi foto diterima pada slot foto lawan di perangkat penerima.
+1. Buat project di https://supabase.com/
+2. Di project, buka **SQL Editor → New query**, lalu jalankan SQL berikut untuk prototipe:
 
-## Catatan
-- Kamera memerlukan izin dan secure context; GitHub Pages menggunakan HTTPS.
-- Koneksi WebRTC memakai STUN publik untuk membantu koneksi. Jaringan tertentu mungkin memblokir koneksi peer-to-peer; fitur ini tidak dijamin bekerja di semua jaringan.
-- Kode koneksi adalah informasi sesi sementara. Jangan unggah atau bagikan ke tempat publik.
-- Foto tidak diunggah ke server oleh fitur photostrip; proses gambar berjalan di browser. Untuk koneksi LDR, foto dikirim langsung antarbrowser ketika koneksi berhasil.
-- Nama dan foto tidak disimpan permanen oleh website. Unduh hasil jika ingin menyimpannya.
+```sql
+create table if not exists public.photobooth_sessions (
+  id uuid primary key default gen_random_uuid(),
+  photo_one text,
+  name_one text default '',
+  photo_two text,
+  name_two text default '',
+  caption text default 'Jarak boleh jauh, kenangan tetap dekat.',
+  style text default 'midnight',
+  created_at timestamptz not null default now()
+);
+
+alter table public.photobooth_sessions enable row level security;
+
+create policy "public can create photobooth sessions"
+on public.photobooth_sessions for insert to anon
+with check (true);
+
+create policy "public can view photobooth sessions"
+on public.photobooth_sessions for select to anon
+using (true);
+
+create policy "public can update photobooth sessions"
+on public.photobooth_sessions for update to anon
+using (true) with check (true);
+
+grant usage on schema public to anon;
+grant select, insert, update on public.photobooth_sessions to anon;
+```
+
+3. Buka **Project Settings → API** (atau bagian API Keys pada dashboard project) dan salin **Project URL** serta **anon/public key**.
+4. Buka `index.html`, cari dua baris berikut dekat awal script:
+
+```js
+const SUPABASE_URL = "GANTI_DENGAN_SUPABASE_PROJECT_URL";
+const SUPABASE_ANON_KEY = "GANTI_DENGAN_SUPABASE_ANON_KEY";
+```
+
+Ganti nilainya dengan URL dan anon/public key milik project Supabase. **Jangan pernah gunakan `service_role` key di website publik.**
+5. Simpan lalu unggah ulang `index.html` ke GitHub. Tunggu deploy selesai.
+
+### Cara menggunakan link LDR
+1. Kamu dan pasangan membuka website.
+2. Kamu unggah/ambil foto pertama.
+3. Tekan **Buat tautan sesi LDR**, lalu salin dan kirim link ke pasangan.
+4. Pasangan membuka link tersebut, mengambil/mengunggah foto kedua. Foto tersimpan ke sesi yang sama.
+5. Buat strip foto lalu unduh PNG.
+
+## Penting tentang keamanan
+SQL di atas membuat prototipe publik yang sederhana: siapa pun yang mengetahui ID sesi dapat membaca/mengubah data sesi, dan data foto disimpan sebagai data URL di tabel. Gunakan hanya untuk uji coba dengan foto yang tidak sensitif. Untuk peluncuran publik yang serius, sebaiknya gunakan Supabase Storage, masa kedaluwarsa sesi, batas ukuran file, dan kebijakan akses berbasis token/owner. Jangan memasukkan data pribadi sensitif.
