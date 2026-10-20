@@ -1,3 +1,8 @@
+## Fitur v6
+- Pilihan mode di halaman awal: **Foto sendiri** atau **Foto sama pasangan**.
+- Mode sendiri melewati langkah share dan foto orang kedua; jumlah foto tetap mengikuti jumlah frame strip.
+- Mode pasangan mempertahankan alur tautan sesi lintas perangkat dengan Supabase.
+
 # Midnight Love Photobooth — versi publik
 
 Website photobooth berbahasa Indonesia, siap untuk GitHub Pages. Ada beberapa gaya strip, pilihan tata letak, filter, upload foto/kamera, hasil PNG, serta alur sesi foto LDR menggunakan tautan.
