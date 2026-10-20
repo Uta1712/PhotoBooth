@@ -4,7 +4,7 @@ Website photobooth berbahasa Indonesia, siap untuk GitHub Pages. Ada beberapa ga
 
 ## Fitur
 - Bahasa Indonesia dan desain responsif.
-- Template Midnight, Pink Love, Film Analog, Monokrom.
+- 12 desain strip yang benar-benar berbeda: Midnight Classic, Korean 4-Cut, Polaroid Stack, Film Contact Sheet, Heart Windows, Love Magazine, Memory Tickets, Scrapbook, Split Portrait, Comic Pop, Minimal Editorial, dan Neon Afterdark.
 - Layout strip 4/3/2 frame, foto berdampingan, kolase 2x2.
 - Upload foto dan kamera langsung.
 - Filter natural, hangat, dingin, hitam putih, dreamy.
