@@ -50,8 +50,8 @@
 <script>
 // Tambahkan URL Project dan anon key Supabase setelah mengikuti README.md.
 // Jangan pernah memasukkan service_role key ke website publik.
-const SUPABASE_URL = https://htuvwdmxrzoysjcklzif.supabase.co;
-const SUPABASE_ANON_KEY = sb_publishable_zwkd6FDdRiIsT8vgsRC4aA_B9ysmZIy;
+const SUPABASE_URL = "https://htuvwdmxrzoysjcklzif.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_zwkd6FDdRiIsT8vgsRC4aA_B9ysmZIy";
 const $=id=>document.getElementById(id);let photos1=[],photos2=[],photo1=null,photo2=null,selectedStyle='midnight',sessionId=null,streams={},slotCameras={},renderImgs1=[],renderImgs2=[],renderCursor1=0,renderCursor2=0;
 function toast(s){let t=$('toast');t.textContent=s;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 function configured(){return SUPABASE_URL.startsWith('https://')&&!SUPABASE_URL.includes('GANTI_')&&!SUPABASE_ANON_KEY.includes('GANTI_')}
