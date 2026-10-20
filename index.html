@@ -105,7 +105,63 @@ async function generate(){
  const pair=(x,y,w,h,i=0)=>{let gap=12,half=(w-gap)/2;cover(ctx,a,x,y,half,h,filter);cover(ctx,b,x+half+gap,y,half,h,filter);box(x,y,w,h,accent,style==='comic'?6:2);if(style==='film')txt('0'+(i+1),x+12,y+h-10,'bold 14px monospace',ink,'left')};
  const header=(top,sub)=>{txt(top,450,105,'bold 19px Arial',accent);txt(sub,450,158,'italic 34px Georgia',ink)};
  // Every preset has a different layout, frame treatment, typography and decoration.
- if(style==='midnight'||style==='neon'){
+ if(photoboothMode==='solo'){
+  // Solo strip: setiap frame menggunakan foto berbeda milik pengguna yang sama.
+  ctx.fillStyle=panel;ctx.fillRect(42,42,816,1716);
+  if(style==='neon'){ctx.save();ctx.shadowColor=accent;ctx.shadowBlur=22;box(62,62,776,1676,accent,5);ctx.restore()}
+  if(style==='polaroid'||style==='scrapbook'){
+   txt('MY LITTLE MOMENTS',450,105,'bold 22px Georgia',ink);
+   txt(name1+' · JUST ME',450,153,'italic 30px Georgia',accent);
+  }else if(style==='magazine'||style==='editorial'){
+   txt('THE SOLO ISSUE',450,105,'bold 22px Arial',accent);
+   txt(name1+' / MAIN CHARACTER',450,153,'italic 29px Georgia',ink);
+  }else if(style==='comic'){
+   txt('ME, MYSELF & I ✦',450,120,'italic 900 36px Arial',accent);
+  }else if(style==='film'){
+   txt('ONE PERSON · MANY MOMENTS',450,112,'bold 19px monospace',accent);
+  }else if(style==='ticket'){
+   txt('ADMIT ONE',450,112,'bold 26px monospace',accent);
+   txt('A DATE WITH MYSELF',450,155,'italic 25px Georgia',ink);
+  }else if(style==='heart'){
+   txt('LOVE YOURSELF',450,112,'bold 22px Georgia',accent);
+   txt('a little story about me',450,155,'italic 27px Georgia',ink);
+  }else{
+   txt('MIDNIGHT LOVE · SOLO EDITION',450,105,'bold 19px Arial',accent);
+   txt(name1+' ✦ ME TIME',450,153,'italic 30px Georgia',ink);
+  }
+  const n=need, gap=18;
+  if(layout==='grid'){
+   const coords=[[95,220],[460,220],[95,785],[460,785]];
+   for(let i=0;i<4;i++){
+    const [x,y]=coords[i];
+    if(style==='polaroid'||style==='scrapbook'){
+     ctx.fillStyle='#fffaf3';ctx.fillRect(x-8,y-8,330,520);
+     cover(ctx,renderImgs1[i],x,y,314,460,filter);
+     txt('MOMENT 0'+(i+1),x+157,y+492,'bold 13px Arial','#443c3b');
+    }else{
+     cover(ctx,renderImgs1[i],x,y,314,520,filter);box(x,y,314,520,accent,style==='comic'?6:3);
+     if(style==='film')txt('0'+(i+1),x+12,y+24,'bold 14px monospace',accent,'left');
+    }
+   }
+  }else{
+   const h=n===2?515:n===3?365:270;
+   const start=n===2?235:n===3?220:215;
+   for(let i=0;i<n;i++){
+    const y=start+i*(h+gap),x=layout==='side'?180:125,w=layout==='side'?540:650;
+    if(style==='polaroid'||style==='scrapbook'){
+     ctx.fillStyle='#fffaf3';ctx.fillRect(x-10,y-8,w+20,h+28);
+     cover(ctx,renderImgs1[i],x,y,w,h,filter);
+     txt('MY MOMENT 0'+(i+1),450,y+h+18,'bold 12px Arial','#443c3b');
+    }else{
+     cover(ctx,renderImgs1[i],x,y,w,h,filter);box(x,y,w,h,accent,style==='comic'?6:3);
+     if(style==='film')txt('FRAME 0'+(i+1),x+12,y+24,'bold 14px monospace',accent,'left');
+    }
+   }
+  }
+  txt('♡',450,1585,'34px Georgia',accent);
+  txt(cap,450,1630,'italic 21px Georgia',ink);
+  txt(date.toUpperCase(),450,1670,'13px Arial',muted);
+ }else if(style==='midnight'||style==='neon'){
   ctx.fillStyle=panel;ctx.fillRect(42,42,816,1716);
   for(let i=0;i<70;i++){ctx.globalAlpha=.2+Math.random()*.6;ctx.fillStyle=i%4? '#fff':accent;ctx.beginPath();ctx.arc(55+Math.random()*790,60+Math.random()*1670,1+Math.random()*3,0,7);ctx.fill()}ctx.globalAlpha=1;
   header('MIDNIGHT LOVE',name1+' ✦ '+name2);
