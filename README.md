@@ -73,3 +73,10 @@ Ganti nilainya dengan URL dan anon/public key milik project Supabase. **Jangan p
 
 ## Penting tentang keamanan
 SQL di atas membuat prototipe publik yang sederhana: siapa pun yang mengetahui ID sesi dapat membaca/mengubah data sesi, dan data foto disimpan sebagai data URL di tabel. Gunakan hanya untuk uji coba dengan foto yang tidak sensitif. Untuk peluncuran publik yang serius, sebaiknya gunakan Supabase Storage, masa kedaluwarsa sesi, batas ukuran file, dan kebijakan akses berbasis token/owner. Jangan memasukkan data pribadi sensitif.
+
+
+## Alur website terbaru
+
+Website menggunakan menu bertahap: **Masuk → Pilih strip (12 desain) → Foto orang pertama → Bagikan tautan → Foto orang kedua di perangkat pasangan → Preview hasil → Galeri**. Tautan pasangan otomatis membuka menu foto kedua. Galeri disimpan secara lokal di browser/perangkat yang digunakan; galeri tidak otomatis tersinkron antarperangkat.
+
+Tombol berbagi WhatsApp dan tautan sesi lintas perangkat memerlukan konfigurasi Supabase sesuai petunjuk di atas. Jangan gunakan Supabase `service_role` key di website publik.
