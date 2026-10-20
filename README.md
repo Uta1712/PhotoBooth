@@ -6,7 +6,9 @@ Website photobooth berbahasa Indonesia, siap untuk GitHub Pages. Ada beberapa ga
 - Bahasa Indonesia dan desain responsif.
 - 12 desain strip yang benar-benar berbeda: Midnight Classic, Korean 4-Cut, Polaroid Stack, Film Contact Sheet, Heart Windows, Love Magazine, Memory Tickets, Scrapbook, Split Portrait, Comic Pop, Minimal Editorial, dan Neon Afterdark.
 - Layout strip 4/3/2 frame, foto berdampingan, kolase 2x2.
-- Upload foto dan kamera langsung.
+- Upload foto dan sesi kamera langsung untuk setiap frame; hasil jepretan otomatis masuk ke frame yang dipilih.
+- Jumlah foto per orang mengikuti tata letak: 2, 3, atau 4 foto. Kedua orang wajib melengkapi jumlah frame yang sama.
+- Setiap foto orang pertama dan kedua disimpan sebagai kumpulan foto pada sesi, sehingga pasangan bisa melengkapi frame melalui tautan lintas perangkat.
 - Filter natural, hangat, dingin, hitam putih, dreamy.
 - Unduh hasil PNG.
 - Tautan sesi lintas perangkat memakai Supabase (perlu konfigurasi satu kali).
@@ -18,7 +20,7 @@ Website photobooth berbahasa Indonesia, siap untuk GitHub Pages. Ada beberapa ga
 4. Pilih **Deploy from a branch**, branch `main`, folder `/(root)`, lalu Save.
 
 ## B. Aktifkan tautan sesi lintas perangkat (Supabase gratis)
-GitHub Pages hanya menyajikan file statis. Agar foto yang kamu ambil bisa dilihat pacar melalui link, perlu database online. Website ini sudah disiapkan untuk Supabase.
+GitHub Pages hanya menyajikan file statis. Agar foto yang kamu ambil bisa dilihat pacar melalui link, perlu database online. Website ini sudah disiapkan untuk Supabase. Foto tiap frame dikirim sebagai kumpulan data foto dalam kolom `photo_one` dan `photo_two`; kolom `layout` menyimpan jumlah frame yang dipilih.
 
 1. Buat project di https://supabase.com/
 2. Di project, buka **SQL Editor → New query**, lalu jalankan SQL berikut untuk prototipe:
@@ -32,8 +34,11 @@ create table if not exists public.photobooth_sessions (
   name_two text default '',
   caption text default 'Jarak boleh jauh, kenangan tetap dekat.',
   style text default 'midnight',
+  layout text default 'four',
   created_at timestamptz not null default now()
 );
+
+alter table public.photobooth_sessions add column if not exists layout text default 'four';
 
 alter table public.photobooth_sessions enable row level security;
 
