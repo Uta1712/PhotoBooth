@@ -64,31 +64,54 @@ $(`slotfile-${n}-${i}`).addEventListener('change',async e=>{try{if(e.target.file
 $(`slotremove-${n}-${i}`).onclick=()=>{stopCamera(`${n}-${i}`);setSlotPhoto(n,i,null);renderPhotoSlots(n);if(sessionId&&configured())updateSession(n)};
 $(`slotcam-${n}-${i}`).onclick=async()=>{
  try{
-  if(!window.isSecureContext){throw new Error('secure-context')}
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){throw new Error('unsupported')}
+  if(!window.isSecureContext)throw new Error('secure-context');
+  if(!navigator.mediaDevices?.getUserMedia)throw new Error('unsupported');
   stopCamera(`${n}-${i}`);
-  let stream;
-  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:1280}},audio:false})}
-  catch(firstError){stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false})}
-  slotCameras[`${n}-${i}`]=stream;
   const v=$(`slotvideo-${n}-${i}`);
-  v.srcObject=stream;v.muted=true;v.setAttribute('playsinline','');v.classList.remove('hidden');
+  const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'}},audio:false});
+  slotCameras[`${n}-${i}`]=stream;
+  v.pause();
+  v.srcObject=stream;
+  v.muted=true;
+  v.autoplay=true;
+  v.playsInline=true;
+  v.setAttribute('playsinline','');
+  v.style.display='block';
+  v.style.width='100%';
+  v.style.height='auto';
+  v.style.minHeight='220px';
+  v.style.background='#050610';
+  v.classList.remove('hidden');
   $(`slotsnap-${n}-${i}`).classList.remove('hidden');
   $(`slotpreview-${n}-${i}`).classList.add('hidden');
-  try{await v.play()}catch(playError){/* browser may start playback after permission/user gesture */}
-  if(!v.videoWidth){await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('camera-timeout')),8000);v.addEventListener('loadedmetadata',()=>{clearTimeout(timer);resolve()},{once:true});v.addEventListener('error',()=>{clearTimeout(timer);reject(new Error('camera-video-error'))},{once:true})})}
+  await new Promise((resolve,reject)=>{
+   let done=false;
+   const finish=(err)=>{if(done)return;done=true;clearTimeout(timer);v.removeEventListener('loadedmetadata',onReady);v.removeEventListener('playing',onReady);v.removeEventListener('error',onError);err?reject(err):resolve()};
+   const onReady=()=>{if(v.videoWidth>0&&v.videoHeight>0)finish()};
+   const onError=()=>finish(new Error('camera-video-error'));
+   const timer=setTimeout(()=>finish(new Error('camera-timeout')),10000);
+   v.addEventListener('loadedmetadata',onReady);
+   v.addEventListener('playing',onReady);
+   v.addEventListener('error',onError);
+   if(v.readyState>=1)onReady();
+   v.play().then(onReady).catch(()=>{});
+  });
+  $('sessionStatus')&&($('sessionStatus').textContent='Kamera aktif. Posisikan wajah, lalu tekan Ambil & masukkan ke frame.');
  }catch(e){
   stopCamera(`${n}-${i}`);
-  const v=$(`slotvideo-${n}-${i}`);if(v){v.srcObject=null;v.classList.add('hidden')}
-  $(`slotsnap-${n}-${i}`).classList.add('hidden');$(`slotpreview-${n}-${i}`).classList.remove('hidden');
-  let msg='Kamera tidak bisa dibuka. Izinkan akses kamera di pengaturan browser, lalu coba lagi.';
-  if(e.message==='secure-context')msg='Kamera perlu website HTTPS. Buka melalui link GitHub Pages (https://), jangan dari file index.html langsung.';
-  else if(e.message==='unsupported')msg='Browser ini tidak mendukung akses kamera. Coba Chrome terbaru melalui HTTPS.';
-  else if(e.name==='NotAllowedError'||e.name==='PermissionDeniedError')msg='Izin kamera ditolak. Klik ikon gembok di alamat website, izinkan Kamera, lalu muat ulang halaman.';
-  else if(e.name==='NotFoundError'||e.name==='DevicesNotFoundError')msg='Kamera tidak ditemukan pada perangkat ini. Kamu masih bisa menggunakan tombol Unggah.';
-  else if(e.name==='NotReadableError'||e.name==='TrackStartError')msg='Kamera sedang dipakai aplikasi lain. Tutup aplikasi kamera/video lain, lalu coba lagi.';
-  else if(e.message==='camera-timeout')msg='Kamera belum siap. Coba lagi atau gunakan tombol Unggah.';
-  $('sessionStatus')&&($('sessionStatus').textContent=msg);toast(msg);
+  const v=$(`slotvideo-${n}-${i}`);
+  if(v){v.pause();v.srcObject=null;v.classList.add('hidden')}
+  $(`slotsnap-${n}-${i}`).classList.add('hidden');
+  $(`slotpreview-${n}-${i}`).classList.remove('hidden');
+  let msg='Kamera tidak bisa dibuka. Periksa izin kamera dan coba lagi.';
+  if(e.message==='secure-context')msg='Kamera memerlukan HTTPS. Buka website melalui link https://, bukan file lokal.';
+  else if(e.message==='unsupported')msg='Browser tidak mendukung akses kamera. Coba Chrome terbaru.';
+  else if(e.name==='NotAllowedError'||e.name==='PermissionDeniedError')msg='Akses kamera diblokir. Klik ikon pengaturan di samping alamat website, izinkan Kamera, lalu muat ulang.';
+  else if(e.name==='NotFoundError'||e.name==='DevicesNotFoundError')msg='Kamera tidak ditemukan pada perangkat ini.';
+  else if(e.name==='NotReadableError'||e.name==='TrackStartError')msg='Kamera sedang digunakan aplikasi lain. Tutup aplikasi kamera/video lain.';
+  else if(e.message==='camera-timeout')msg='Kamera menyala tetapi gambar tidak masuk. Coba muat ulang halaman dan tekan Live foto lagi.';
+  $('sessionStatus')&&($('sessionStatus').textContent=msg);
+  toast(msg);
  }
 };
 $(`slotsnap-${n}-${i}`).onclick=async()=>{try{const v=$(`slotvideo-${n}-${i}`);if(!v.videoWidth||!v.videoHeight){toast('Tunggu sampai gambar kamera muncul, lalu coba lagi.');return}const c=document.createElement('canvas');const max=1400,scale=Math.min(1,max/Math.max(v.videoWidth,v.videoHeight));c.width=Math.round(v.videoWidth*scale);c.height=Math.round(v.videoHeight*scale);const ctx=c.getContext('2d');if(!ctx)throw new Error('canvas');ctx.drawImage(v,0,0,c.width,c.height);const data=await compressData(c.toDataURL('image/jpeg',.9));stopCamera(`${n}-${i}`);setSlotPhoto(n,i,data);renderPhotoSlots(n);if(sessionId&&configured())await updateSession(n);toast(`Live foto langsung masuk ke frame ${i+1} ♥`)}catch(e){toast('Gagal mengambil foto. Coba lagi atau unggah dari galeri.')}};
