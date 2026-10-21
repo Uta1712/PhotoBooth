@@ -62,8 +62,36 @@ function updatePhotoCount(n){const arr=n===1?photos1:photos2,count=requiredCount
 function renderPhotoSlots(n){const host=$('photoSlots'+n);if(!host)return;const arr=n===1?photos1:photos2,count=requiredCount();Object.keys(slotCameras).filter(k=>k.startsWith(n+'-')).forEach(stopCamera);host.innerHTML='';for(let i=0;i<count;i++){const card=document.createElement('div');card.className='photo-slot';card.innerHTML=`<div class="slot-title"><b>Frame ${i+1}</b><span class="note">${arr[i]?'Siap ✦':'Belum diisi'}</span></div><div class="slot-preview" id="slotpreview-${n}-${i}"><img id="slotimg-${n}-${i}" class="${arr[i]?'':'hidden'}" alt="Foto frame ${i+1}"><div id="slotempty-${n}-${i}" class="${arr[i]?'hidden':''}">♡<br>Foto masuk ke frame ${i+1}</div></div><div class="slot-actions"><label class="btn secondary small">Unggah<input id="slotfile-${n}-${i}" type="file" accept="image/*" hidden></label><button class="btn secondary small" id="slotcam-${n}-${i}">Live foto</button><button class="btn secondary small" id="slotremove-${n}-${i}">Hapus</button></div><video id="slotvideo-${n}-${i}" class="hidden" autoplay playsinline style="width:100%;border-radius:10px;margin-top:8px"></video><button id="slotsnap-${n}-${i}" class="btn primary small hidden" style="margin-top:8px;width:100%">Ambil & masukkan ke frame</button>`;host.append(card);if(arr[i]){$(`slotimg-${n}-${i}`).src=arr[i]}
 $(`slotfile-${n}-${i}`).addEventListener('change',async e=>{try{if(e.target.files[0])setSlotPhoto(n,i,await compress(e.target.files[0]));if(sessionId&&configured())await updateSession(n);toast(`Foto masuk ke frame ${i+1} ✦`)}catch(err){toast('Foto gagal dibaca')}});
 $(`slotremove-${n}-${i}`).onclick=()=>{stopCamera(`${n}-${i}`);setSlotPhoto(n,i,null);renderPhotoSlots(n);if(sessionId&&configured())updateSession(n)};
-$(`slotcam-${n}-${i}`).onclick=async()=>{try{stopCamera(`${n}-${i}`);const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});slotCameras[`${n}-${i}`]=stream;const v=$(`slotvideo-${n}-${i}`);v.srcObject=stream;v.classList.remove('hidden');$(`slotsnap-${n}-${i}`).classList.remove('hidden');$(`slotpreview-${n}-${i}`).classList.add('hidden');}catch(e){toast('Izinkan akses kamera atau unggah foto dari galeri')}};
-$(`slotsnap-${n}-${i}`).onclick=async()=>{const v=$(`slotvideo-${n}-${i}`);if(!v.videoWidth)return;const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);const data=await compressData(c.toDataURL('image/jpeg',.9));stopCamera(`${n}-${i}`);setSlotPhoto(n,i,data);renderPhotoSlots(n);if(sessionId&&configured())await updateSession(n);toast(`Live foto langsung masuk ke frame ${i+1} ♥`)};
+$(`slotcam-${n}-${i}`).onclick=async()=>{
+ try{
+  if(!window.isSecureContext){throw new Error('secure-context')}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){throw new Error('unsupported')}
+  stopCamera(`${n}-${i}`);
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:1280}},audio:false})}
+  catch(firstError){stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false})}
+  slotCameras[`${n}-${i}`]=stream;
+  const v=$(`slotvideo-${n}-${i}`);
+  v.srcObject=stream;v.muted=true;v.setAttribute('playsinline','');v.classList.remove('hidden');
+  $(`slotsnap-${n}-${i}`).classList.remove('hidden');
+  $(`slotpreview-${n}-${i}`).classList.add('hidden');
+  try{await v.play()}catch(playError){/* browser may start playback after permission/user gesture */}
+  if(!v.videoWidth){await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('camera-timeout')),8000);v.addEventListener('loadedmetadata',()=>{clearTimeout(timer);resolve()},{once:true});v.addEventListener('error',()=>{clearTimeout(timer);reject(new Error('camera-video-error'))},{once:true})})}
+ }catch(e){
+  stopCamera(`${n}-${i}`);
+  const v=$(`slotvideo-${n}-${i}`);if(v){v.srcObject=null;v.classList.add('hidden')}
+  $(`slotsnap-${n}-${i}`).classList.add('hidden');$(`slotpreview-${n}-${i}`).classList.remove('hidden');
+  let msg='Kamera tidak bisa dibuka. Izinkan akses kamera di pengaturan browser, lalu coba lagi.';
+  if(e.message==='secure-context')msg='Kamera perlu website HTTPS. Buka melalui link GitHub Pages (https://), jangan dari file index.html langsung.';
+  else if(e.message==='unsupported')msg='Browser ini tidak mendukung akses kamera. Coba Chrome terbaru melalui HTTPS.';
+  else if(e.name==='NotAllowedError'||e.name==='PermissionDeniedError')msg='Izin kamera ditolak. Klik ikon gembok di alamat website, izinkan Kamera, lalu muat ulang halaman.';
+  else if(e.name==='NotFoundError'||e.name==='DevicesNotFoundError')msg='Kamera tidak ditemukan pada perangkat ini. Kamu masih bisa menggunakan tombol Unggah.';
+  else if(e.name==='NotReadableError'||e.name==='TrackStartError')msg='Kamera sedang dipakai aplikasi lain. Tutup aplikasi kamera/video lain, lalu coba lagi.';
+  else if(e.message==='camera-timeout')msg='Kamera belum siap. Coba lagi atau gunakan tombol Unggah.';
+  $('sessionStatus')&&($('sessionStatus').textContent=msg);toast(msg);
+ }
+};
+$(`slotsnap-${n}-${i}`).onclick=async()=>{try{const v=$(`slotvideo-${n}-${i}`);if(!v.videoWidth||!v.videoHeight){toast('Tunggu sampai gambar kamera muncul, lalu coba lagi.');return}const c=document.createElement('canvas');const max=1400,scale=Math.min(1,max/Math.max(v.videoWidth,v.videoHeight));c.width=Math.round(v.videoWidth*scale);c.height=Math.round(v.videoHeight*scale);const ctx=c.getContext('2d');if(!ctx)throw new Error('canvas');ctx.drawImage(v,0,0,c.width,c.height);const data=await compressData(c.toDataURL('image/jpeg',.9));stopCamera(`${n}-${i}`);setSlotPhoto(n,i,data);renderPhotoSlots(n);if(sessionId&&configured())await updateSession(n);toast(`Live foto langsung masuk ke frame ${i+1} ♥`)}catch(e){toast('Gagal mengambil foto. Coba lagi atau unggah dari galeri.')}};
 }}
 function syncPrimary(){photo1=photos1[0]||null;photo2=photos2[0]||null}
 function compressData(data){return new Promise(resolve=>{const im=new Image();im.onload=()=>{const max=900,sc=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.76))};im.src=data})}

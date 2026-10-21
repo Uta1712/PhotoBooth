@@ -90,3 +90,9 @@ SQL di atas membuat prototipe publik yang sederhana: siapa pun yang mengetahui I
 Website menggunakan menu bertahap: **Masuk → Pilih strip (12 desain) → Foto orang pertama → Bagikan tautan → Foto orang kedua di perangkat pasangan → Preview hasil → Galeri**. Tautan pasangan otomatis membuka menu foto kedua. Galeri disimpan secara lokal di browser/perangkat yang digunakan; galeri tidak otomatis tersinkron antarperangkat.
 
 Tombol berbagi WhatsApp dan tautan sesi lintas perangkat memerlukan konfigurasi Supabase sesuai petunjuk di atas. Jangan gunakan Supabase `service_role` key di website publik.
+
+## Troubleshooting Live Foto
+- Jalankan website melalui alamat HTTPS GitHub Pages, bukan dengan membuka `index.html` langsung dari folder komputer. Akses kamera browser hanya tersedia pada konteks aman (HTTPS atau localhost).
+- Di Chrome HP/desktop, buka ikon pengaturan situs di samping alamat website → **Kamera** → **Izinkan**, lalu muat ulang halaman.
+- Tutup aplikasi lain yang sedang memakai kamera. Jika kamera tetap tidak tersedia, gunakan tombol **Unggah** sebagai alternatif.
+- Tombol Live Foto sekarang menampilkan pesan yang lebih spesifik jika HTTPS, izin kamera, perangkat kamera, atau proses pemuatan video bermasalah.
